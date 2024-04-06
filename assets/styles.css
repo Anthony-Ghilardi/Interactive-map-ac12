@@ -1,0 +1,26 @@
+body {
+    background-color: #17291c;
+    color: #b0d3ff;
+}
+
+main{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#main-section {
+    min-height: 16.5vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: safe center;
+    flex-wrap: wrap;
+}
+
+#map {
+    height: 80vh;
+    width: 90vw;
+    background-color: #ccc;
+}
+
