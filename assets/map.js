@@ -1,3 +1,5 @@
+/********** API key for foursquare fsq3fxuow2pv/x9i9sOHpmFU+wMflDDDJE5RI/kZdVBivGc=**********/
+
 /********** Function to get user coords WORKING CREATES POPUP RETURNS COORDS IN CONSOLE **********/
 async function getCoords(){
     pos = await new Promise((resolve, reject) => {
@@ -5,8 +7,6 @@ async function getCoords(){
     })
     return [pos.coords.latitude, pos.coords.longitude]
 }
-
-console.log(getCoords())
 
 /********** Leaflet map for user location **********/
 async function initMap() {
@@ -18,6 +18,7 @@ async function initMap() {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             minZoom: '12',
         }).addTo(map);
+        
 
         const marker = L.marker(coords).addTo(map);
         marker.bindPopup("<p1><b>Your Location</b></p1>").openPopup();
@@ -26,24 +27,55 @@ async function initMap() {
 
 initMap();
 
-/********** Function for getting users selection from dropdown **********/
-const userChoice = document.querySelector('#dropdown')
-    userChoice.addEventListener('change', (event) =>{ // possibly change to 'select' if encountering future errors
-        const userSelection = event.target.value;
-        console.log(userSelection)
-    });
-
-/********** API key for foursquare fsq3fxuow2pv/x9i9sOHpmFU+wMflDDDJE5RI/kZdVBivGc=**********/
-/********** Fecth request for coffee **********/
-const options = {
-    method: 'GET',
-    headers: {
-      accept: 'application/json',
-      Authorization: 'fsq3fxuow2pv/x9i9sOHpmFU+wMflDDDJE5RI/kZdVBivGc='
+/********** Function for placing locations on map **********/
+    async function placeSearch(userSelection, coords) {
+        try {
+            const searchParams = new URLSearchParams({
+              query: userSelection,
+              ll: coords,
+              open_now: 'true',
+              sort: 'DISTANCE'
+            });
+            const results = await fetch(
+              `https://api.foursquare.com/v3/places/search?${searchParams}`,
+              {
+                method: 'GET',
+                headers: {
+                  Accept: 'application/json',
+                  Authorization: 'fsq3fxuow2pv/x9i9sOHpmFU+wMflDDDJE5RI/kZdVBivGc=',
+                }
+              }
+            );
+            const data = await results.json();
+            return data;
+        } catch (err) {
+            console.error(err);
+        }
     }
-  };
-  
-  fetch('https://api.foursquare.com/v3/places/search?query=Coffee&ll=36.3003904%2C-115.2483328&limit=5', options)
-    .then(response => response.json())
-    .then(response => console.log(response))
-    .catch(err => console.error(err));
+
+    async function locationMarkers(locations, map){
+        locations.forEach(location => {
+            let position = [location.geocodes.main.latitude, location.geocode.main.longitude]
+            let marker = L.marker(position)
+            marker.addTo(map).bindPopup(`${location.name} ${location.location.address}`).openPopup();
+        });
+    }
+ 
+
+/********** Function for getting users selection from dropdown **********/
+async () => {
+    const coords = await getCoords()
+    const dataCoords = `${coords[0]}, ${coords[1]}`
+
+const userChoice = document.querySelector('#dropdown')
+    userChoice.addEventListener('select', async (event) =>{ 
+        const userSelection = event.target.value;
+        console.log(userSelection, dataCoords);
+        let result = await placeSearch(userSelection, dataCoords);
+        let locations = result.results
+        console.log(locations)
+        locationMarkers(locations.map)      
+    });
+}
+
+console.log(getCoords())
