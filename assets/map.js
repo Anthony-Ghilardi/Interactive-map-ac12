@@ -1,5 +1,5 @@
 /********** API key for foursquare fsq3fxuow2pv/x9i9sOHpmFU+wMflDDDJE5RI/kZdVBivGc=**********/
-
+let map;
 /********** Function to get user coords WORKING CREATES POPUP RETURNS COORDS IN CONSOLE **********/
 async function getCoords(){
     pos = await new Promise((resolve, reject) => {
@@ -12,7 +12,7 @@ async function getCoords(){
 async function initMap() {
     const coords = await getCoords();
     if (coords) {
-        const map = L.map('map').setView(coords, 15);
+        map = L.map('map').setView(coords, 15);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -28,34 +28,59 @@ async function initMap() {
 initMap();
 
 /********** Function for placing locations on map **********/
-    async function placeSearch(userSelection, coords) {
-        try {
-            const searchParams = new URLSearchParams({
-              query: userSelection,
-              ll: coords,
-              open_now: 'true',
-              sort: 'DISTANCE'
-            });
-            const results = await fetch(
-              `https://api.foursquare.com/v3/places/search?${searchParams}`,
-              {
-                method: 'GET',
-                headers: {
-                  Accept: 'application/json',
-                  Authorization: 'fsq3fxuow2pv/x9i9sOHpmFU+wMflDDDJE5RI/kZdVBivGc=',
-                }
-              }
-            );
-            const data = await results.json();
-            return data;
-        } catch (err) {
-            console.error(err);
-        }
+async function placeSearch(userSelection, dataCoords) {
+    try {
+        const searchParams = new URLSearchParams({
+          query: userSelection,
+          ll: dataCoords,
+          open_now: 'true',
+          sort: 'DISTANCE'
+        });
+        const results = await fetch(
+          `https://api.foursquare.com/v3/places/search?${searchParams}`,
+          {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+              Authorization: 'fsq3fxuow2pv/x9i9sOHpmFU+wMflDDDJE5RI/kZdVBivGc=',
+            }
+          }
+        );
+        const data = await results.json();
+        return data;
+    } catch (err) {
+        console.error(err);
     }
+}
+
+    // async function placeSearch(userSelection, coords) {
+    //     try {
+    //         const searchParams = new URLSearchParams({
+    //           query: userSelection,
+    //           ll: coords,
+    //           open_now: 'true',
+    //           sort: 'DISTANCE'
+    //         });
+    //         const results = await fetch(
+    //           `https://api.foursquare.com/v3/places/search?${searchParams}`,
+    //           {
+    //             method: 'GET',
+    //             headers: {
+    //               Accept: 'application/json',
+    //               Authorization: 'fsq3fxuow2pv/x9i9sOHpmFU+wMflDDDJE5RI/kZdVBivGc=',
+    //             }
+    //           }
+    //         );
+    //         const data = await results.json();
+    //         return data;
+    //     } catch (err) {
+    //         console.error(err);
+    //     }
+    // }
 
     async function locationMarkers(locations, map){
         locations.forEach(location => {
-            let position = [location.geocodes.main.latitude, location.geocode.main.longitude]
+            let position = [location.geocodes.main.latitude, location.geocodes.main.longitude]
             let marker = L.marker(position)
             marker.addTo(map).bindPopup(`${location.name} ${location.location.address}`).openPopup();
         });
@@ -63,19 +88,18 @@ initMap();
  
 
 /********** Function for getting users selection from dropdown **********/
-async () => {
-    const coords = await getCoords()
-    const dataCoords = `${coords[0]}, ${coords[1]}`
+document.querySelector('#dropdown').addEventListener('change', async (event) => { 
+    const userSelection = event.target.value;
+    if(userSelection !== "null") { 
+        const coords = await getCoords();
+        const dataCoords = `${coords[0]}, ${coords[1]}`;
+        const result = await placeSearch(userSelection, dataCoords);
+        if(result && result.results) {
+            locationMarkers(result.results, map);
+        }
+    }
+});
 
-const userChoice = document.querySelector('#dropdown')
-    userChoice.addEventListener('select', async (event) =>{ 
-        const userSelection = event.target.value;
-        console.log(userSelection, dataCoords);
-        let result = await placeSearch(userSelection, dataCoords);
-        let locations = result.results
-        console.log(locations)
-        locationMarkers(locations.map)      
-    });
-}
 
-console.log(getCoords())
+getCoords().then(coords => console.log(coords));
+
