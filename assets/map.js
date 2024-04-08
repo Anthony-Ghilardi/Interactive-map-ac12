@@ -28,11 +28,11 @@ async function initMap() {
 initMap();
 
 /********** Function for placing locations on map **********/
-async function placeSearch(userSelection, dataCoords) {
+async function placeSearch(userSelection) { // adding coords like this (userSelection, coords) breaks this line
     try {
         const searchParams = new URLSearchParams({
           query: userSelection,
-          ll: dataCoords,
+          ll: '36.3003904,-115.2483328', // adding coords like ll: coords, here breaks this line
           open_now: 'true',
           sort: 'DISTANCE'
         });
